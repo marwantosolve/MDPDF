@@ -1,0 +1,144 @@
+#!/usr/bin/env python3
+"""
+pdf — Convert Markdown files to PDF.
+
+Usage:
+  pdf file.md                        Convert file.md → file.pdf
+  pdf file1.md file2.md file3.md     Batch convert multiple files
+  pdf -o output.pdf file.md          Custom output name (single file only)
+  pdf --style custom.css file.md     Use a custom CSS stylesheet
+  pdf --help                         Show this help
+"""
+
+import sys
+import os
+import time
+import argparse
+from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# Add lib/ to path
+SCRIPT_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(SCRIPT_DIR / "lib"))
+
+import md2pdf
+
+# ──────────────────────────────────────────────────────────
+# Colors
+# ──────────────────────────────────────────────────────────
+BOLD      = "\033[1m"
+DIM       = "\033[2m"
+RESET     = "\033[0m"
+GREEN     = "\033[32m"
+RED       = "\033[31m"
+BLUE      = "\033[34m"
+CYAN      = "\033[36m"
+YELLOW    = "\033[33m"
+MAGENTA   = "\033[35m"
+
+def fmt_size(size_bytes: int) -> str:
+    """Format file size in human-readable form."""
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    elif size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.1f} KB"
+    else:
+        return f"{size_bytes / (1024 * 1024):.1f} MB"
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="pdf",
+        description="Convert Markdown files to PDF using Prince.",
+        epilog="Examples:\n"
+               "  pdf notes.md\n"
+               "  pdf ch1.md ch2.md ch3.md\n"
+               "  pdf -o report.pdf README.md\n"
+               "  pdf --style academic.css thesis.md",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "files",
+        nargs="+",
+        metavar="FILE",
+        help="One or more Markdown (.md) files to convert.",
+    )
+    parser.add_argument(
+        "-o", "--output",
+        metavar="OUT",
+        help="Output PDF path (only valid with a single input file).",
+    )
+    parser.add_argument(
+        "-s", "--style",
+        metavar="CSS",
+        help="Path to a custom CSS stylesheet.",
+    )
+
+    args = parser.parse_args()
+
+    # Validate
+    if args.output and len(args.files) > 1:
+        print(f"{RED}✗ --output can only be used with a single input file.{RESET}", file=sys.stderr)
+        sys.exit(1)
+
+    for f in args.files:
+        if not f.endswith(".md"):
+            print(f"{YELLOW}⚠ Warning: '{f}' does not have a .md extension.{RESET}", file=sys.stderr)
+
+    # Header
+    n = len(args.files)
+    print(f"\n{BOLD}{MAGENTA}  ╭─────────────────────────────────────╮{RESET}")
+    print(f"{BOLD}{MAGENTA}  │{RESET}   {BOLD}MD → PDF{RESET}  {DIM}via Prince{RESET}             {BOLD}{MAGENTA}│{RESET}")
+    print(f"{BOLD}{MAGENTA}  ╰─────────────────────────────────────╯{RESET}")
+    print(f"  {DIM}Converting {n} file{'s' if n > 1 else ''}...{RESET}\n")
+
+    success = 0
+    failed = 0
+    start_all = time.time()
+
+    def process_one(md_file: str, out: str | None):
+        nonlocal success, failed
+        name = Path(md_file).name
+        t0 = time.time()
+        print(f"  {CYAN}⟳{RESET} {name} {DIM}...{RESET}", end="", flush=True)
+
+        ok = md2pdf.convert(md_file, output_path=out, custom_css=args.style)
+        elapsed = time.time() - t0
+
+        if ok:
+            out_path = out or str(Path(md_file).with_suffix(".pdf"))
+            size = fmt_size(Path(out_path).stat().st_size)
+            print(f"\r  {GREEN}✓{RESET} {name} {DIM}→{RESET} {BOLD}{Path(out_path).name}{RESET}  {DIM}({size}, {elapsed:.1f}s){RESET}")
+            return True
+        else:
+            print(f"\r  {RED}✗{RESET} {name}  {DIM}({elapsed:.1f}s){RESET}")
+            return False
+
+    if n == 1:
+        ok = process_one(args.files[0], args.output)
+        success = 1 if ok else 0
+        failed = 0 if ok else 1
+    else:
+        # Process files sequentially (Prince doesn't love parallel runs)
+        for f in args.files:
+            ok = process_one(f, None)
+            if ok:
+                success += 1
+            else:
+                failed += 1
+
+    elapsed_all = time.time() - start_all
+
+    # Summary
+    print()
+    if failed == 0:
+        print(f"  {GREEN}{BOLD}✓ All {success} file{'s' if success > 1 else ''} converted successfully{RESET} {DIM}({elapsed_all:.1f}s){RESET}")
+    else:
+        print(f"  {YELLOW}{BOLD}⚠ {success} succeeded, {failed} failed{RESET} {DIM}({elapsed_all:.1f}s){RESET}")
+    print()
+
+    sys.exit(1 if failed > 0 else 0)
+
+
+if __name__ == "__main__":
+    main()

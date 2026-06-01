@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+
+# Environment / IDE / CLI
+.antigravitycli/
+.idea/
+.vscode/
+
+# Local / OS
+.DS_Store
+Thumbs.db
+
+# Generated / Output
+# (Optional: ignore generated PDFs and test outputs if desired, 
+# but keep sample MD/PDF in the repo if you want them as examples)
+# RL_Tea.pdf

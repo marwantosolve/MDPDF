@@ -1,0 +1,10 @@
+# Core requirements for MDPDF
+
+# Markdown and HTML conversion with math extensions
+markdown>=3.10.2
+latex2mathml>=3.81.0
+pymdown-extensions>=10.21.3
+
+# PDF to Markdown extraction
+pymupdf4llm>=1.27.2.3
+PyMuPDF>=1.27.2.3
