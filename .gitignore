@@ -14,8 +14,3 @@ venv/
 # Local / OS
 .DS_Store
 Thumbs.db
-
-# Generated / Output
-# (Optional: ignore generated PDFs and test outputs if desired, 
-# but keep sample MD/PDF in the repo if you want them as examples)
-# RL_Tea.pdf
