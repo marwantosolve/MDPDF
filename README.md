@@ -31,7 +31,7 @@ Getting started is quick and easy. Just clone this repository and run the instal
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/MDPDF.git
+git clone https://github.com/marwantosolve/MDPDF.git
 cd MDPDF
 
 # Run the installer
