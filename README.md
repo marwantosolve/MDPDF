@@ -48,6 +48,7 @@ The installer will:
 
 - **Python 3.8+**
 - **PrinceXML** (Required for the `pdf` command to compile HTML to PDF).
+  - Download it with `pip install prince-pdf --break-system-packages`
   - *Debian/Ubuntu:* `sudo apt install prince` (or download the latest package from [PrinceXML](https://www.princexml.com/download/))
   - *Fedora/RHEL:* `sudo dnf install prince`
   - *macOS:* `brew install prince`
